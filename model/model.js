@@ -39,5 +39,21 @@ export default Model.extend({
     });
 
     return dfd;
+  },
+  destroy: function (id) {
+    var dfd = new can.Deferred();
+
+    // Get a reference to the child
+    var child = this.ref.child(id);
+
+    // Get the existing data
+    child.once('value', function (snapshot) {
+      dfd.resolve(snapshot.val());
+    });
+
+    // Remove the child
+    child.remove();
+
+    return dfd;
   }
 }, {});

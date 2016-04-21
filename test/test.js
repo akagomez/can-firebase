@@ -114,3 +114,42 @@ QUnit.test('Saving an existing model updates the existing child', function (asse
     });
   });
 });
+
+QUnit.test('Deleting an existing model removes the child', function (assert) {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  // Create an instance of the Firebase backed Model
+  var todo = new Todo({
+    name: 'Hop',
+    completed: false
+  });
+  var done = assert.async();
+  var createdTodo, todoRef;
+
+  // Save the instance
+  todo.save().then(function (todo) {
+    createdTodo = todo;
+
+    // Destroy the instance
+    return todo.destroy();
+  }).then(function (todo) {
+    QUnit.ok(createdTodo === todo,
+      'Both the saved and destroyed instances are the same');
+
+    // Get a reference to the created child using the returned `id`
+    todoRef = todosRef.child(todo.attr('id'));
+
+    // Get the properties of the returned child
+    todoRef.once('value', function (snapshot) {
+      QUnit.equal(snapshot.exists(), false, 'Child does not exists');
+      done();
+    });
+  });
+});
