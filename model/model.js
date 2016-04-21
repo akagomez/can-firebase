@@ -18,5 +18,26 @@ export default Model.extend({
     });
 
     return dfd;
+  },
+  update: function (id, data) {
+    var dfd = new can.Deferred();
+
+    // Don't write the `id` property to the child
+    delete data.id;
+
+    // Get a reference to the child
+    var child = this.ref.child(id);
+
+    // Update the properties of the child
+    child.update(data);
+
+    // Get the resulting data
+    child.once('value', function (snapshot) {
+      dfd.resolve(can.extend(snapshot.val(), {
+        id: child.key()
+      }));
+    });
+
+    return dfd;
   }
 }, {});
