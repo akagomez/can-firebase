@@ -4,6 +4,7 @@
   "description": "Two-way bind CanJS lists and maps to Firebase",
   "main": "can-firebase.js",
   "scripts": {
+    "start": "serve .",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -19,5 +20,49 @@
   "bugs": {
     "url": "https://github.com/akagomez/can-firebase/issues"
   },
-  "homepage": "https://github.com/akagomez/can-firebase#readme"
+  "homepage": "https://github.com/akagomez/can-firebase#readme",
+  "dependencies": {
+    "can": "^2.3.23",
+    "firebase": "^2.4.2",
+    "steal": "^0.16.2"
+  },
+  "devDependencies": {
+    "eslint": "^2.8.0",
+    "jquery": "^2.2.3",
+    "serve": "^1.4.0",
+    "steal-qunit": "^0.1.1"
+  },
+  "system": {
+    "npmAlgorithm": "flat"
+  },
+  "eslintConfig": {
+    "env": {
+      "browser": true
+    },
+    "extends": [
+      "eslint:recommended"
+    ],
+    "globals": {
+      "require": true,
+      "module": true
+    },
+    "parserOptions": {
+      "ecmaVersion": 6,
+      "sourceType": "module"
+    },
+    "rules": {
+      "indent": [
+        "error",
+        2
+      ],
+      "no-restricted-globals": [
+        "error",
+        "stop"
+      ],
+      "semi": [
+        "error",
+        "always"
+      ]
+    }
+  }
 }
