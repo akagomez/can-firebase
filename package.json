@@ -1,6 +1,6 @@
 {
   "name": "can-firebase",
-  "version": "0.1.1",
+  "version": "0.0.0",
   "description": "Firebase backed can.Model and can.Model.List",
   "main": "can-firebase.js",
   "scripts": {
