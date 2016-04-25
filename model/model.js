@@ -48,11 +48,12 @@ export default Model.extend({
 
     // Get the existing data
     child.once('value', function (snapshot) {
+
+      // Remove the child
+      child.remove();
+
       dfd.resolve(snapshot.val());
     });
-
-    // Remove the child
-    child.remove();
 
     return dfd;
   }
