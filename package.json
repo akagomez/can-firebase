@@ -1,7 +1,7 @@
 {
   "name": "can-firebase",
   "version": "0.1.0",
-  "description": "Two-way bind CanJS lists and maps to Firebase",
+  "description": "Firebase backed can.Model and can.Model.List",
   "main": "can-firebase.js",
   "scripts": {
     "start": "serve .",
