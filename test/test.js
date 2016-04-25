@@ -11,7 +11,7 @@ QUnit.module('can-firebase', {
   }
 });
 
-QUnit.test('Saving a new model creates a child', function (assert) {
+QUnit.test('Saving a new model creates a child', function () {
 
   // Get a reference to the `todos` child in the database
   var todosRef = db.child('todos');
@@ -26,8 +26,9 @@ QUnit.test('Saving a new model creates a child', function (assert) {
   var todo = new Todo({
     name: 'Hop'
   });
-  var done = assert.async();
   var todoRef;
+
+  QUnit.stop();
 
   // Save the instance
   todo.save().then(function (todo) {
@@ -53,12 +54,12 @@ QUnit.test('Saving a new model creates a child', function (assert) {
       QUnit.deepEqual(persistedTodo, clientTodo,
         'Persisted properties match instance properties');
 
-      done();
+      QUnit.start();
     });
   });
 });
 
-QUnit.test('Saving an existing model updates the existing child', function (assert) {
+QUnit.test('Saving an existing model updates the existing child', function () {
 
   // Get a reference to the `todos` child in the database
   var todosRef = db.child('todos');
@@ -74,8 +75,9 @@ QUnit.test('Saving an existing model updates the existing child', function (asse
     name: 'Hop',
     completed: false
   });
-  var done = assert.async();
   var createdTodo, todoRef;
+
+  QUnit.stop();
 
   // Save the instance
   todo.save().then(function (todo) {
@@ -114,13 +116,13 @@ QUnit.test('Saving an existing model updates the existing child', function (asse
         // Check that we haven't created a new child
         QUnit.equal(snapshot.numChildren(), 1, 'Only one child exists');
 
-        done();
+        QUnit.start();
       });
     });
   });
 });
 
-QUnit.test('Deleting an existing model removes the child', function (assert) {
+QUnit.test('Deleting an existing model removes the child', function () {
   // Get a reference to the `todos` child in the database
   var todosRef = db.child('todos');
 
@@ -135,8 +137,9 @@ QUnit.test('Deleting an existing model removes the child', function (assert) {
     name: 'Hop',
     completed: false
   });
-  var done = assert.async();
   var createdTodo, todoRef;
+
+  QUnit.stop();
 
   // Save the instance
   todo.save().then(function (todo) {
@@ -155,12 +158,12 @@ QUnit.test('Deleting an existing model removes the child', function (assert) {
     // Get the properties of the returned child
     todoRef.once('value', function (snapshot) {
       QUnit.equal(snapshot.exists(), false, 'Child does not exists');
-      done();
+      QUnit.start();
     });
   });
 });
 
-QUnit.test('Changes to the child are reflected in the model', function (assert) {
+QUnit.test('Changes to the child are reflected in the model', function () {
   // Get a reference to the `todos` child in the database
   var todosRef = db.child('todos');
 
@@ -175,8 +178,9 @@ QUnit.test('Changes to the child are reflected in the model', function (assert) 
     name: 'Hop',
     completed: false
   });
-  var done = assert.async();
   var todoRef;
+
+  QUnit.stop();
 
   // Save the instance
   todo.save().then(function (todo) {
@@ -194,6 +198,6 @@ QUnit.test('Changes to the child are reflected in the model', function (assert) 
     QUnit.equal(todo.attr('completed'), true,
       'Child change was synced to the model');
 
-    done();
+    QUnit.start();
   });
 });
