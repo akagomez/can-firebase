@@ -36,7 +36,8 @@ QUnit.test('Saving a new model creates a child', function (assert) {
     QUnit.equal(todo.attr('name'), 'Hop', 'Name matches created todo');
     QUnit.ok(todo.attr('id'), 'Has an id property');
 
-    // Get a reference to the created child using the returned `id`
+    // Get a reference to the created child  from the db
+    // directly using the returned `id`
     todoRef = todosRef.child(todo.attr('id'));
 
     // Get the properties of the returned child
@@ -48,6 +49,7 @@ QUnit.test('Saving a new model creates a child', function (assert) {
       // NOTE: Firebase does not return the `id` of the child as a property
       delete clientTodo.id;
 
+      // Check that the properties match
       QUnit.deepEqual(persistedTodo, clientTodo,
         'Persisted properties match instance properties');
 
@@ -90,7 +92,8 @@ QUnit.test('Saving an existing model updates the existing child', function (asse
     QUnit.equal(todo.attr('completed'), true,
       'The completed property was changed');
 
-    // Get a reference to the created child using the returned `id`
+    // Get a reference to the created child  from the db
+    // directly using the returned `id`
     todoRef = todosRef.child(todo.attr('id'));
 
     // Get the properties of the returned child
@@ -102,11 +105,13 @@ QUnit.test('Saving an existing model updates the existing child', function (asse
       // NOTE: Firebase does not return the `id` of the child as a property
       delete clientTodo.id;
 
+      // Check that the properties match
       QUnit.deepEqual(persistedTodo, clientTodo,
         'Persisted properties match instance properties');
 
       todosRef.once('value', function (snapshot) {
 
+        // Check that we haven't created a new child
         QUnit.equal(snapshot.numChildren(), 1, 'Only one child exists');
 
         done();
@@ -143,7 +148,8 @@ QUnit.test('Deleting an existing model removes the child', function (assert) {
     QUnit.ok(createdTodo === todo,
       'Both the saved and destroyed instances are the same');
 
-    // Get a reference to the created child using the returned `id`
+    // Get a reference to the created child  from the db
+    // directly using the returned `id`
     todoRef = todosRef.child(todo.attr('id'));
 
     // Get the properties of the returned child
@@ -151,5 +157,43 @@ QUnit.test('Deleting an existing model removes the child', function (assert) {
       QUnit.equal(snapshot.exists(), false, 'Child does not exists');
       done();
     });
+  });
+});
+
+QUnit.test('Changes to the child are reflected in the model', function (assert) {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  // Create an instance of the Firebase backed Model
+  var todo = new Todo({
+    name: 'Hop',
+    completed: false
+  });
+  var done = assert.async();
+  var todoRef;
+
+  // Save the instance
+  todo.save().then(function (todo) {
+
+    // Get a reference to the created child  from the db
+    // directly using the returned `id`
+    todoRef = todosRef.child(todo.attr('id'));
+
+    // Update the db directly
+    todoRef.update({
+      completed: true
+    });
+
+    // Check that the model was updated
+    QUnit.equal(todo.attr('completed'), true,
+      'Child change was synced to the model');
+
+    done();
   });
 });

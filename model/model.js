@@ -57,4 +57,40 @@ export default Model.extend({
 
     return dfd;
   }
-}, {});
+}, {
+  setup: function () {
+    Model.prototype.setup.apply(this, arguments);
+    this.bind('id', this._idChange);
+    delete this._init;
+  },
+  _idChange: function (ev, newVal, oldVal) {
+    var ref = this.constructor.ref;
+    var newChild = ref.child(newVal);
+    var oldChild = oldVal && ref.child(oldVal);
+
+    if (oldChild) {
+      oldChild.off('value', this._childValueHandler);
+    }
+
+    if (newChild) {
+      this._childValueHandler = can.proxy(this._childValueChange, this);
+      newChild.on('value', this._childValueHandler);
+    }
+  },
+  destroy: function () {
+    var ref = this.constructor.ref;
+    var id = this.attr('id');
+    var child = ref.child(id);
+    var childValueHandler = this._childValueHandler;
+
+    return Model.prototype.destroy.apply(this, arguments).then(function (model) {
+      child.off('value', childValueHandler);
+      return model;
+    });
+  },
+  _childValueChange: function (snapshot) {
+    this.attr(can.extend({
+      id: this.attr('id')
+    }, snapshot.val()), true); // Replace others
+  }
+});
