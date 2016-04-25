@@ -23,7 +23,7 @@ export default Model.extend({
     var dfd = new can.Deferred();
 
     // Don't write the `id` property to the child
-    delete data.id;
+    delete data[this.id];
 
     // Get a reference to the child
     var child = this.ref.child(id);
@@ -60,12 +60,29 @@ export default Model.extend({
 }, {
   setup: function () {
     Model.prototype.setup.apply(this, arguments);
+
     this.bind('id', this._idChange);
-    delete this._init;
+
+    delete this._init; // Because sort.js does this
+  },
+  destroy: function () {
+    var ref = this.constructor.ref;
+    var id = this.attr(this.constructor.id);
+    var child = ref.child(id);
+    var childValueHandler = this._childValueHandler;
+
+    return Model.prototype.destroy.apply(this, arguments).then(function (model) {
+      child.off('value', childValueHandler);
+      return model;
+    });
+  },
+  getRef: function () {
+    var id = this.attr(this.constructor.id);
+    return id && this.constructor.ref.child(id);
   },
   _idChange: function (ev, newVal, oldVal) {
     var ref = this.constructor.ref;
-    var newChild = ref.child(newVal);
+    var newChild = newVal && ref.child(newVal);
     var oldChild = oldVal && ref.child(oldVal);
 
     if (oldChild) {
@@ -77,20 +94,9 @@ export default Model.extend({
       newChild.on('value', this._childValueHandler);
     }
   },
-  destroy: function () {
-    var ref = this.constructor.ref;
-    var id = this.attr('id');
-    var child = ref.child(id);
-    var childValueHandler = this._childValueHandler;
-
-    return Model.prototype.destroy.apply(this, arguments).then(function (model) {
-      child.off('value', childValueHandler);
-      return model;
-    });
-  },
   _childValueChange: function (snapshot) {
     this.attr(can.extend({
-      id: this.attr('id')
+      id: this.attr(this.constructor.id) // Set the id
     }, snapshot.val()), true); // Replace others
   }
 });

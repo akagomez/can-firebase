@@ -201,3 +201,81 @@ QUnit.test('Changes to the child are reflected in the model', function () {
     QUnit.start();
   });
 });
+
+QUnit.test('Child value is bound when the id is set', function () {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Create a child so we can get its id
+  var todoRef = todosRef.push({
+    name: 'Hop',
+    completed: false
+  });
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  // Create an empty Firebase model instance
+  var todo = new Todo();
+
+  // Assign the todo the id of the child todo
+  todo.attr('id', todoRef.key());
+
+  // Check that the child properties were synced to the model
+  QUnit.equal(todo.attr('name'), 'Hop',
+    'The name property was set');
+  QUnit.equal(todo.attr('completed'), false,
+    'The completed property was set');
+
+  todoRef.update({
+    completed: true
+  });
+
+  QUnit.equal(todo.attr('completed'), true,
+    'The completed property was updated');
+});
+
+QUnit.test('Child value is unbound when the id is removed', function () {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  // Create an instance of the Firebase backed Model
+  var todo = new Todo({
+    name: 'Hop',
+    completed: false
+  });
+
+  QUnit.stop();
+
+  // Save the model instance so that an id is set and
+  // the child value is bound
+  todo.save().then(function () {
+
+    QUnit.start();
+
+    var todoRef = todo.getRef();
+
+    todoRef.update({
+      completed: true
+    });
+
+    QUnit.equal(todo.attr('completed'), true, 'Update was synced');
+
+    todo.removeAttr('id');
+
+    todoRef.update({
+      name: 'Skip'
+    });
+
+    QUnit.notEqual(todo.attr('name'), 'Skip', 'Update was not synced');
+  });
+});
