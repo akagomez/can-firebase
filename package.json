@@ -5,7 +5,15 @@
   "main": "can-firebase.js",
   "scripts": {
     "start": "serve .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "preversion": "npm test && npm run build",
+    "version": "git commit -am \"Update dist for release\" && git checkout -b release && git add -f dist/",
+    "postversion": "git push --tags && git checkout master && git branch -D release && git push",
+    "release:patch": "npm version patch && npm publish",
+    "release:minor": "npm version minor && npm publish",
+    "release:major": "npm version major && npm publish",
+    "testee": "testee test/test.html --browsers firefox",
+    "test": "eslint . && npm run testee",
+    "build": "node build.js"
   },
   "repository": {
     "type": "git",
@@ -30,7 +38,9 @@
     "eslint": "^2.8.0",
     "jquery": "^2.2.3",
     "serve": "^1.4.0",
-    "steal-qunit": "^0.1.1"
+    "steal-qunit": "^0.1.1",
+    "steal-tools": "^0.16.1",
+    "testee": "^0.2.5"
   },
   "system": {
     "npmAlgorithm": "flat"
@@ -44,7 +54,8 @@
     ],
     "globals": {
       "require": true,
-      "module": true
+      "module": true,
+      "__dirname": true
     },
     "parserOptions": {
       "ecmaVersion": 6,
