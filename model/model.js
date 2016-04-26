@@ -143,7 +143,8 @@ FirebaseModel.List = Model.List.extend({}, {
     var context = this;
     var bindResult = Model.List.prototype.bind.apply(this, arguments);
     var eventMap = {
-      'child_added': this._childAdded
+      'child_added': this._childAdded,
+      'child_removed': this._childRemoved
     };
 
     if (this._bindings > 0 && ! this._childBindings) {
@@ -154,7 +155,7 @@ FirebaseModel.List = Model.List.extend({}, {
         context._childBindings[eventName] = can.proxy(handler, context);
 
         // Bind to the event
-        context.query.on('child_added', context._childBindings[eventName]);
+        context.query.on(eventName, context._childBindings[eventName]);
       });
     }
 
@@ -202,6 +203,13 @@ FirebaseModel.List = Model.List.extend({}, {
       else {
         return this.splice(siblingIndex + 1, 0, model);
       }
+    }
+  },
+  _childRemoved: function (snapshot) {
+    var childIndex = this._indexOfChildId(snapshot.key());
+
+    if (childIndex > -1) {
+      this.splice(childIndex, 1);
     }
   }
 });
