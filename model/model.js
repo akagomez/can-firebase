@@ -1,7 +1,7 @@
 import can from 'can/util/';
 import Model from 'can/model/';
 
-export default Model.extend({
+var FirebaseModel = Model.extend({
   create: function (data) {
     var dfd = new can.Deferred();
 
@@ -56,6 +56,31 @@ export default Model.extend({
     });
 
     return dfd;
+  },
+  findAll: function (queryParams) {
+    var query = this.ref;
+    var queryTypes = {
+      order: ['orderByChild', 'orderByKey', 'orderByValue', 'orderByPriority'],
+      limit: ['limitToFirst', 'limitToLast', 'limit'],
+      range: ['startAt', 'endAt', 'equalTo']
+    };
+    var orderType;
+
+    can.each(queryTypes, function (methods, type) {
+      can.each(methods, function (method) {
+        if (method in queryParams) {
+          if (type === 'order') {
+            orderType = method;
+          }
+
+          var params = can.makeArray(queryParams[method]);
+
+          query = query[method].apply(query, params);
+        }
+      });
+    });
+
+    return Promise.resolve(new this.List(query, orderType));
   }
 }, {
   setup: function () {
@@ -100,3 +125,57 @@ export default Model.extend({
     }, snapshot.val()), true); // Replace others
   }
 });
+
+FirebaseModel.List = Model.List.extend({}, {
+  setup: function () {
+    // Exclude arguments
+    Model.List.prototype.setup.apply(this);
+  },
+  init: function (query, orderType) {
+    this.query = query;
+    this.orderType = orderType;
+  },
+  bind: function () {
+    var bindResult = Model.List.prototype.bind.apply(this, arguments);
+
+    if (this._bindings > 0) {
+      this.query.on('child_added', can.proxy(this._childAdded, this));
+    }
+
+    return bindResult;
+  },
+  _indexOfChildId: function (id) {
+    var indexOf = -1;
+    var idKey = this.constructor.id;
+
+    this.each(function (item, index) {
+      if (item.attr(idKey) === id) {
+        indexOf = index;
+        return false; // Stop iterating
+      }
+    });
+
+    return indexOf;
+  },
+  _childAdded: function (snapshot, prevChildKey) {
+    var data = can.extend({
+      id: snapshot.key()
+    }, snapshot.val());
+    var model = new this.constructor.Map(data);
+
+    if (prevChildKey === null) {
+      return this.unshift(model);
+    } else {
+      var siblingIndex = this._indexOfChildId(prevChildKey);
+
+      if (siblingIndex === -1) {
+        return this.push(model);
+      }
+      else {
+        return this.splice(siblingIndex + 1, 0, model);
+      }
+    }
+  }
+});
+
+export default FirebaseModel;

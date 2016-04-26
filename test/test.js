@@ -264,6 +264,7 @@ QUnit.test('Child value is unbound when the id is removed', function () {
 
     QUnit.start();
 
+    // Will work now that the model has an id
     var todoRef = todo.getRef();
 
     // Change the child
@@ -284,5 +285,58 @@ QUnit.test('Child value is unbound when the id is removed', function () {
 
     // Check that the model instance was not updated
     QUnit.notEqual(todo.attr('name'), 'Skip', 'Update was not synced');
+  });
+});
+
+QUnit.test('Queries are created with findAll - orderByChild', function () {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  QUnit.stop();
+  QUnit.stop();
+  QUnit.stop();
+
+  // Create and save todos
+  Promise.all([
+    new Todo({
+      name: 'Hop',
+      completed: false
+    }).save(),
+    new Todo({
+      name: 'Skip',
+      completed: false
+    }).save(),
+    new Todo({
+      name: 'Jump',
+      completed: false
+    }).save()
+  ]).then(function () {
+
+    // Query for items using findAll syntax
+    Todo.findAll({
+      orderByChild: 'name'
+    }).then(function (todos) {
+
+      var expectedNames = ['Hop', 'Jump', 'Skip'];
+
+      // Increase the binding count to subscribe to query results
+      todos.bind('add', function (ev, models, offset) {
+
+        QUnit.start();
+
+        models.forEach(function (model, index) {
+
+          // Check the model names and indexes
+          QUnit.equal(model.attr('name'), expectedNames[index + offset],
+            'Correct model added at correct index');
+        });
+      });
+    });
   });
 });
