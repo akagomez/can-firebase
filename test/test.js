@@ -299,8 +299,6 @@ QUnit.test('Queries are created with findAll - orderByChild', function () {
   }, {});
 
   QUnit.stop();
-  QUnit.stop();
-  QUnit.stop();
 
   // Create and save todos
   Promise.all([
@@ -324,11 +322,12 @@ QUnit.test('Queries are created with findAll - orderByChild', function () {
     }).then(function (todos) {
 
       var expectedNames = ['Hop', 'Jump', 'Skip'];
+      var addCount = 0;
 
       // Increase the binding count to subscribe to query results
       todos.bind('add', function (ev, models, offset) {
 
-        QUnit.start();
+        addCount++;
 
         models.forEach(function (model, index) {
 
@@ -336,6 +335,67 @@ QUnit.test('Queries are created with findAll - orderByChild', function () {
           QUnit.equal(model.attr('name'), expectedNames[index + offset],
             'Correct model added at correct index');
         });
+
+        if (addCount === 3) {
+          QUnit.start();
+          QUnit.equal(addCount, 3, 'Corrrect number of items added');
+
+          todos.unbind('add');
+        }
+      });
+    });
+  });
+});
+
+QUnit.test('Queries are created with findAll - orderByKey', function () {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  QUnit.stop();
+
+  new Todo({
+    name: 'Hop',
+    completed: false
+  }).save().then(new Todo({
+    name: 'Skip',
+    completed: false
+  }).save()).then(new Todo({
+    name: 'Jump',
+    completed: false
+  }).save()).then(function () {
+
+    // Query for items using findAll syntax
+    Todo.findAll({
+      orderByKey: []
+    }).then(function (todos) {
+
+      var expectedNames = ['Hop', 'Skip', 'Jump'];
+      var addCount = 0;
+
+      // Increase the binding count to subscribe to query results
+      todos.bind('add', function (ev, models, offset) {
+
+        addCount++;
+
+        models.forEach(function (model, index) {
+
+          // Check the model names and indexes
+          QUnit.equal(model.attr('name'), expectedNames[index + offset],
+            'Correct model added at correct index');
+        });
+
+        if (addCount === 3) {
+          QUnit.start();
+          QUnit.equal(addCount, 3, 'Corrrect number of items added');
+
+          todos.unbind('add');
+        }
       });
     });
   });

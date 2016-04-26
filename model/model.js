@@ -136,13 +136,37 @@ FirebaseModel.List = Model.List.extend({}, {
     this.orderType = orderType;
   },
   bind: function () {
+    var context = this;
     var bindResult = Model.List.prototype.bind.apply(this, arguments);
+    var eventMap = {
+      'child_added': this._childAdded
+    };
 
-    if (this._bindings > 0) {
-      this.query.on('child_added', can.proxy(this._childAdded, this));
+    if (this._bindings > 0 && ! this._childBindings) {
+      context._childBindings = {};
+
+      can.each(eventMap, function (handler, eventName) {
+        // Save a reference to each handler created
+        context._childBindings[eventName] = can.proxy(handler, context);
+
+        // Bind to the event
+        context.query.on('child_added', context._childBindings[eventName]);
+      });
     }
 
     return bindResult;
+  },
+  unbind: function () {
+    var context = this;
+    var unbindResult = Model.List.prototype.unbind.apply(this, arguments);
+
+    if (this._bindings === 0 && this._childBindings) {
+      can.each(this._childBindings, function (handler, eventName) {
+        context.query.off(eventName, handler);
+      });
+    }
+
+    return unbindResult;
   },
   _indexOfChildId: function (id) {
     var indexOf = -1;
