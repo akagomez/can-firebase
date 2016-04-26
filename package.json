@@ -53,9 +53,10 @@
       "eslint:recommended"
     ],
     "globals": {
+      "__dirname": true,
       "require": true,
       "module": true,
-      "__dirname": true
+      "Promise": true
     },
     "parserOptions": {
       "ecmaVersion": 6,
