@@ -230,10 +230,12 @@ QUnit.test('Child value is bound when the id is set', function () {
   QUnit.equal(todo.attr('completed'), false,
     'The completed property was set');
 
+  // Update the child
   todoRef.update({
     completed: true
   });
 
+  // Check that the model instance was updated
   QUnit.equal(todo.attr('completed'), true,
     'The completed property was updated');
 });
@@ -264,18 +266,23 @@ QUnit.test('Child value is unbound when the id is removed', function () {
 
     var todoRef = todo.getRef();
 
+    // Change the child
     todoRef.update({
       completed: true
     });
 
+    // Check that the model instance was updated
     QUnit.equal(todo.attr('completed'), true, 'Update was synced');
 
+    // Remove the id
     todo.removeAttr('id');
 
+    /// Change the child
     todoRef.update({
       name: 'Skip'
     });
 
+    // Check that the model instance was not updated
     QUnit.notEqual(todo.attr('name'), 'Skip', 'Update was not synced');
   });
 });
