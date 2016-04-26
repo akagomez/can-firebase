@@ -5,8 +5,8 @@ var firebasePlugin = {
 };
 
 // Register the Firebase plugin to the `can` namespace
-if (typeof window !== 'undefined' && !require.resolve && window.can) {
-  window.can.Firebase = firebasePlugin;
+if (typeof window !== 'undefined' && typeof window.can === 'object') {
+  window.can.firebase = firebasePlugin;
 }
 
 export default firebasePlugin;
