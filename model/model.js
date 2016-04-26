@@ -86,7 +86,11 @@ var FirebaseModel = Model.extend({
   setup: function () {
     Model.prototype.setup.apply(this, arguments);
 
-    this.bind('id', this._idChange);
+    this.bind(this.constructor.id, this._idChange);
+
+    if (typeof this[this.constructor.id] !== 'undefined') {
+      this._idChange(null, this[this.constructor.id]);
+    }
 
     delete this._init; // Because sort.js does this
   },
