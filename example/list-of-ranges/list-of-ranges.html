@@ -1,0 +1,39 @@
+<title>list-of-ranges - can-firebase</title>
+<style>
+body {
+  padding: 20px;
+}
+range-list input[type=range] {
+  display: inline-block;
+  width: 80%;
+}
+li {
+  margin-bottom: 10px;
+}
+</style>
+<script type="text/stache" can-autorender>
+  <range-list />
+</script>
+<script id="range-list-template" type="text/stache">
+  <button class="btn btn-primary" ($click)="createRange">
+    Create Range
+  </button>
+
+  <hr />
+
+  <ul class="list-unstyled">
+    {{#each rangeList}}
+      <li>
+        {{value}}
+        <input type="range" min="{{min}}" max="{{max}}"
+          ($input)="updateValue(%context, $element)"
+          {$value}="value" />
+        <button class="btn btn-danger" ($click)="destroy()">
+          <i class="glyphicon glyphicon-trash" />
+        </button>
+      </li>
+    {{/each}}
+  </ul>
+</script>
+<script src="../../node_modules/steal/steal.js" main="can-firebase/example/list-of-ranges/"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" />
