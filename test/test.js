@@ -2,11 +2,11 @@ import QUnit from "steal-qunit";
 import Firebase from 'firebase';
 import canFirebase from 'can-firebase';
 
-var db = new Firebase('can-firebase.firebaseio.com');
+var db = new Firebase('can-firebase.firebaseio.com/tests');
 
 QUnit.module('can-firebase', {
   beforeEach: function () {
-    // Empty the database
+    // Empty the test database
     db.remove();
   }
 });
