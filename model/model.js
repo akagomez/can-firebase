@@ -89,6 +89,7 @@ var FirebaseModel = Model.extend({
     this.bind(this.constructor.id, this._idChange);
 
     if (typeof this[this.constructor.id] !== 'undefined') {
+      // TODO: Find a better way
       this._idChange(null, this[this.constructor.id]);
     }
 

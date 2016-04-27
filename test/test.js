@@ -400,3 +400,165 @@ QUnit.test('Queries are created with findAll - orderByKey', function () {
     });
   });
 });
+
+QUnit.test('Models instantiated with an id bind to child value', function () {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  // Create a todo child
+  var todoRef = todosRef.push({
+    name: 'Hop',
+    completed: false
+  });
+
+  // Create a model with the same child id
+  var todo = new Todo({
+    id: todoRef.key()
+  });
+
+  // Check that value was bound and the initial properties set
+  QUnit.equal(todo.attr('name'), 'Hop',
+    'Name property was set by value event');
+
+  todoRef.update({
+    completed: true
+  });
+
+  // Check that value was bound and the updated properties set
+  QUnit.equal(todo.attr('completed'), true,
+    'Name property was set by value event');
+});
+
+QUnit.test('Removing a child removes the model', function () {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  todosRef.push({
+    name: 'Hop'
+  });
+  todosRef.push({
+    name: 'Skip'
+  });
+  todosRef.push({
+    name: 'Jump'
+  });
+
+  QUnit.stop();
+
+  Todo.findAll({
+    orderByKey: []
+  }).then(function (todos) {
+
+    QUnit.start();
+
+    todos.bind('add', function () {});
+
+    var secondTodoId = todos.attr('1.id');
+
+    todosRef.child(secondTodoId).remove();
+
+    QUnit.equal(todos.attr('length'), 2, 'An item was removed');
+    QUnit.equal(todos.attr('0.name'), 'Hop', 'The first item has the correct name');
+    QUnit.equal(todos.attr('1.name'), 'Jump', 'The second item has the correct name');
+    QUnit.ok(true, 'The correct item was removed');
+  });
+});
+
+QUnit.test('Removing a child removes the model', function () {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  // Create a list of children
+  todosRef.push({
+    name: 'Hop'
+  });
+  todosRef.push({
+    name: 'Skip'
+  });
+  todosRef.push({
+    name: 'Jump'
+  });
+
+  QUnit.stop();
+
+  // Query the list of children
+  Todo.findAll({
+    orderByKey: []
+  }).then(function (todos) {
+
+    QUnit.start();
+
+    // Bind to query events
+    todos.bind('add', function () {});
+
+    var secondTodoId = todos.attr('1.id');
+
+    // Remove the second child
+    todosRef.child(secondTodoId).remove();
+
+    // Check that the model was removed from the list
+    QUnit.equal(todos.attr('length'), 2, 'An item was removed');
+    QUnit.equal(todos.attr('0.name'), 'Hop', 'The first item has the correct name');
+    QUnit.equal(todos.attr('1.name'), 'Jump', 'The second item has the correct name');
+    QUnit.ok(true, 'The correct item was removed');
+  });
+});
+
+QUnit.test('Removing a parent removes all models', function () {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  // Create a list of children
+  todosRef.push({
+    name: 'Hop'
+  });
+  todosRef.push({
+    name: 'Skip'
+  });
+  todosRef.push({
+    name: 'Jump'
+  });
+
+  QUnit.stop();
+
+  // Query the list of children
+  Todo.findAll({
+    orderByKey: []
+  }).then(function (todos) {
+
+    QUnit.start();
+
+    // Bind to query events
+    todos.bind('add', function () {});
+
+    // Remove the parent
+    todosRef.remove();
+
+    // Check that the all models are removed from the list
+    QUnit.equal(todos.attr('length'), 0, 'All items were removed');
+  });
+});
