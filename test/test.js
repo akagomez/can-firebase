@@ -1,6 +1,7 @@
 import QUnit from "steal-qunit";
 import Firebase from 'firebase';
 import canFirebase from 'can-firebase';
+import can from 'can/util/';
 
 var db = new Firebase('can-firebase.firebaseio.com/tests');
 
@@ -463,7 +464,7 @@ QUnit.test('Removing a child removes the model', function () {
 
     QUnit.start();
 
-    todos.bind('add', function () {});
+    todos.bind('add', can.noop);
 
     var secondTodoId = todos.attr('1.id');
 
@@ -507,7 +508,7 @@ QUnit.test('Removing a child removes the model', function () {
     QUnit.start();
 
     // Bind to query events
-    todos.bind('add', function () {});
+    todos.bind('add', can.noop);
 
     var secondTodoId = todos.attr('1.id');
 
@@ -553,12 +554,66 @@ QUnit.test('Removing a parent removes all models', function () {
     QUnit.start();
 
     // Bind to query events
-    todos.bind('add', function () {});
+    todos.bind('add', can.noop);
 
     // Remove the parent
     todosRef.remove();
 
     // Check that the all models are removed from the list
     QUnit.equal(todos.attr('length'), 0, 'All items were removed');
+  });
+});
+
+
+QUnit.test('Model list bind/unbind/bind empties and repopulates', function () {
+  // Get a reference to the `todos` child in the database
+  var todosRef = db.child('todos');
+
+  // Configure a Firebase backed Model to use the referenced
+  // `todos` child for storage
+  var Todo = canFirebase.Model.extend({
+    ref: todosRef
+  }, {});
+
+  // Create a list of children
+  todosRef.push({
+    name: 'Hop'
+  });
+  todosRef.push({
+    name: 'Skip'
+  });
+  todosRef.push({
+    name: 'Jump'
+  });
+
+  QUnit.stop();
+
+  // Query the list of children
+  Todo.findAll({
+    orderByKey: []
+  }).then(function (todos) {
+
+    QUnit.start();
+
+    // Bind to query events
+    todos.bind('add', can.noop);
+
+    // Check that the all models are added to the list
+    QUnit.equal(todos.attr('length'), 3, 'All items were added');
+
+    // Unbind from query events
+    todos.unbind('add', can.noop);
+
+    // Check that the all models still present
+    QUnit.equal(todos.attr('length'), 3, 'Unbind did not remove items');
+
+    // Check that there are no query bindings
+    QUnit.equal(todos._queryBindings, undefined, 'Unbind removed query bindings');
+
+    // Rebind to query events
+    todos.bind('add', can.noop);
+
+    // Check that the all models are readded to the list
+    QUnit.equal(todos.attr('length'), 3, 'All items were readded');
   });
 });

@@ -141,35 +141,40 @@ FirebaseModel.List = Model.List.extend({}, {
     this.orderType = orderType;
   },
   bind: function () {
-    var context = this;
+    var list = this;
     var bindResult = Model.List.prototype.bind.apply(this, arguments);
     var eventMap = {
       'child_added': this._childAdded,
       'child_removed': this._childRemoved
     };
 
-    if (this._bindings > 0 && ! this._childBindings) {
-      context._childBindings = {};
+    if (this._bindings > 0 && ! this._queryBindings) {
+
+      list._queryBindings = {};
+
+      // We're about to get new items; Start a new
+      list.replace([]);
 
       can.each(eventMap, function (handler, eventName) {
         // Save a reference to each handler created
-        context._childBindings[eventName] = can.proxy(handler, context);
-
+        list._queryBindings[eventName] = can.proxy(handler, list);
         // Bind to the event
-        context.query.on(eventName, context._childBindings[eventName]);
+        list.query.on(eventName, list._queryBindings[eventName]);
       });
     }
 
     return bindResult;
   },
   unbind: function () {
-    var context = this;
+    var list = this;
     var unbindResult = Model.List.prototype.unbind.apply(this, arguments);
 
-    if (this._bindings === 0 && this._childBindings) {
-      can.each(this._childBindings, function (handler, eventName) {
-        context.query.off(eventName, handler);
+    if (this._bindings === 0 && this._queryBindings) {
+      can.each(this._queryBindings, function (handler, eventName) {
+        list.query.off(eventName, handler);
       });
+
+      delete this._queryBindings;
     }
 
     return unbindResult;
