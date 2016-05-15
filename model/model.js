@@ -160,6 +160,10 @@ FirebaseModel.List = Model.List.extend({}, {
       'child_removed': this._childRemoved
     };
 
+    if (! this.query) {
+      return bindResult;
+    }
+
     if (this._bindings > 0 && ! this._queryBindings) {
       list._queryBindings = {};
 
@@ -181,6 +185,10 @@ FirebaseModel.List = Model.List.extend({}, {
   unbind: function () {
     var list = this;
     var unbindResult = Model.List.prototype.unbind.apply(this, arguments);
+
+    if (! this.query) {
+      return unbindResult;
+    }
 
     if (this._bindings === 0 && this._queryBindings) {
 
