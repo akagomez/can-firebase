@@ -58,12 +58,14 @@ var FirebaseModel = Model.extend({
     return dfd;
   },
   findAll: function (queryParams) {
+    var Constructor = this;
     var query = this.ref;
     var queryTypes = {
       order: ['orderByChild', 'orderByKey', 'orderByValue', 'orderByPriority'],
       limit: ['limitToFirst', 'limitToLast', 'limit'],
       range: ['startAt', 'endAt', 'equalTo']
     };
+    var dfd = new can.Deferred();
     var orderType;
 
     can.each(queryTypes, function (methods, type) {
@@ -74,13 +76,23 @@ var FirebaseModel = Model.extend({
           }
 
           var params = can.makeArray(queryParams[method]);
-
           query = query[method].apply(query, params);
         }
       });
     });
 
-    return Promise.resolve(new this.List(query, orderType));
+    query.once('value', function (snapshot) {
+      var list = new Constructor.List(query, orderType);
+      snapshot.forEach(function (snapshot) {
+        var model = can.extend({
+          id: snapshot.key()
+        }, snapshot.val());
+        list.push(model);
+      });
+      dfd.resolve(list);
+    });
+
+    return dfd;
   }
 }, {
   setup: function () {
@@ -149,17 +161,18 @@ FirebaseModel.List = Model.List.extend({}, {
     };
 
     if (this._bindings > 0 && ! this._queryBindings) {
-
       list._queryBindings = {};
 
-      // We're about to get new items; Start a new
-      list.replace([]);
+      // Make sure this happens after afterPreviousEvents is true
+      can.batch.afterPreviousEvents(function () {
 
-      can.each(eventMap, function (handler, eventName) {
-        // Save a reference to each handler created
-        list._queryBindings[eventName] = can.proxy(handler, list);
-        // Bind to the event
-        list.query.on(eventName, list._queryBindings[eventName]);
+        can.each(eventMap, function (handler, eventName) {
+          // Save a reference to each handler created
+          list._queryBindings[eventName] = can.proxy(handler, list);
+
+          // Bind to the event
+          list.query.on(eventName, list._queryBindings[eventName]);
+        });
       });
     }
 
@@ -170,11 +183,15 @@ FirebaseModel.List = Model.List.extend({}, {
     var unbindResult = Model.List.prototype.unbind.apply(this, arguments);
 
     if (this._bindings === 0 && this._queryBindings) {
-      can.each(this._queryBindings, function (handler, eventName) {
-        list.query.off(eventName, handler);
-      });
 
-      delete this._queryBindings;
+      // Make sure this happens after afterPreviousEvents is true
+      can.batch.afterPreviousEvents(function () {
+        can.each(list._queryBindings, function (handler, eventName) {
+          list.query.off(eventName, handler);
+        });
+
+        delete list._queryBindings;
+      });
     }
 
     return unbindResult;
@@ -197,6 +214,12 @@ FirebaseModel.List = Model.List.extend({}, {
       id: snapshot.key()
     }, snapshot.val());
     var model = new this.constructor.Map(data);
+    var childIndex = this._indexOfChildId(model.id);
+
+    // Don't add an item that already exists
+    if (childIndex > -1) {
+      return;
+    }
 
     if (prevChildKey === null) {
       return this.unshift(model);

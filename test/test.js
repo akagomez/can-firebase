@@ -48,14 +48,14 @@ QUnit.test('Saving a new model creates a child', function () {
       var persistedTodo = snapshot.val();
       var clientTodo = todo.serialize();
 
+      QUnit.start();
+
       // NOTE: Firebase does not return the `id` of the child as a property
       delete clientTodo.id;
 
       // Check that the properties match
       QUnit.deepEqual(persistedTodo, clientTodo,
         'Persisted properties match instance properties');
-
-      QUnit.start();
     });
   });
 });
@@ -114,10 +114,10 @@ QUnit.test('Saving an existing model updates the existing child', function () {
 
       todosRef.once('value', function (snapshot) {
 
+        QUnit.start();
+
         // Check that we haven't created a new child
         QUnit.equal(snapshot.numChildren(), 1, 'Only one child exists');
-
-        QUnit.start();
       });
     });
   });
@@ -158,8 +158,8 @@ QUnit.test('Deleting an existing model removes the child', function () {
 
     // Get the properties of the returned child
     todoRef.once('value', function (snapshot) {
-      QUnit.equal(snapshot.exists(), false, 'Child does not exists');
       QUnit.start();
+      QUnit.equal(snapshot.exists(), false, 'Child does not exists');
     });
   });
 });
@@ -186,6 +186,8 @@ QUnit.test('Changes to the child are reflected in the model', function () {
   // Save the instance
   todo.save().then(function (todo) {
 
+    QUnit.start();
+
     // Get a reference to the created child  from the db
     // directly using the returned `id`
     todoRef = todosRef.child(todo.attr('id'));
@@ -198,8 +200,6 @@ QUnit.test('Changes to the child are reflected in the model', function () {
     // Check that the model was updated
     QUnit.equal(todo.attr('completed'), true,
       'Child change was synced to the model');
-
-    QUnit.start();
   });
 });
 
@@ -321,29 +321,18 @@ QUnit.test('Queries are created with findAll - orderByChild', function () {
     Todo.findAll({
       orderByChild: 'name'
     }).then(function (todos) {
-
       var expectedNames = ['Hop', 'Jump', 'Skip'];
-      var addCount = 0;
 
-      // Increase the binding count to subscribe to query results
-      todos.bind('add', function (ev, models, offset) {
+      QUnit.start();
 
-        addCount++;
+      todos.forEach(function (model, index) {
 
-        models.forEach(function (model, index) {
-
-          // Check the model names and indexes
-          QUnit.equal(model.attr('name'), expectedNames[index + offset],
-            'Correct model added at correct index');
-        });
-
-        if (addCount === 3) {
-          QUnit.start();
-          QUnit.equal(addCount, 3, 'Corrrect number of items added');
-
-          todos.unbind('add');
-        }
+        // Check the model names and indexes
+        QUnit.equal(model.attr('name'), expectedNames[index],
+          'Correct model added at correct index');
       });
+
+      QUnit.equal(todos.attr('length'), 3, 'Corrrect number of items added');
     });
   });
 });
@@ -377,27 +366,18 @@ QUnit.test('Queries are created with findAll - orderByKey', function () {
     }).then(function (todos) {
 
       var expectedNames = ['Hop', 'Skip', 'Jump'];
-      var addCount = 0;
 
-      // Increase the binding count to subscribe to query results
-      todos.bind('add', function (ev, models, offset) {
+      QUnit.start();
 
-        addCount++;
+      todos.forEach(function (model, index) {
 
-        models.forEach(function (model, index) {
-
-          // Check the model names and indexes
-          QUnit.equal(model.attr('name'), expectedNames[index + offset],
-            'Correct model added at correct index');
-        });
-
-        if (addCount === 3) {
-          QUnit.start();
-          QUnit.equal(addCount, 3, 'Corrrect number of items added');
-
-          todos.unbind('add');
-        }
+        // Check the model names and indexes
+        QUnit.equal(model.attr('name'), expectedNames[index],
+          'Correct model added at correct index');
       });
+
+      QUnit.equal(todos.attr('length'), 3, 'Corrrect number of items added');
+
     });
   });
 });
@@ -462,64 +442,20 @@ QUnit.test('Removing a child removes the model', function () {
     orderByKey: []
   }).then(function (todos) {
 
-    QUnit.start();
+    todos.bind('remove', function () {
 
-    todos.bind('add', can.noop);
+      QUnit.start();
 
-    var secondTodoId = todos.attr('1.id');
+      QUnit.equal(todos.attr('length'), 2, 'An item was removed');
+      QUnit.equal(todos.attr('0.name'), 'Hop', 'The first item has the correct name');
+      QUnit.equal(todos.attr('1.name'), 'Jump', 'The second item has the correct name');
+      QUnit.ok(true, 'The correct item was removed');
 
-    todosRef.child(secondTodoId).remove();
-
-    QUnit.equal(todos.attr('length'), 2, 'An item was removed');
-    QUnit.equal(todos.attr('0.name'), 'Hop', 'The first item has the correct name');
-    QUnit.equal(todos.attr('1.name'), 'Jump', 'The second item has the correct name');
-    QUnit.ok(true, 'The correct item was removed');
-  });
-});
-
-QUnit.test('Removing a child removes the model', function () {
-  // Get a reference to the `todos` child in the database
-  var todosRef = db.child('todos');
-
-  // Configure a Firebase backed Model to use the referenced
-  // `todos` child for storage
-  var Todo = canFirebase.Model.extend({
-    ref: todosRef
-  }, {});
-
-  // Create a list of children
-  todosRef.push({
-    name: 'Hop'
-  });
-  todosRef.push({
-    name: 'Skip'
-  });
-  todosRef.push({
-    name: 'Jump'
-  });
-
-  QUnit.stop();
-
-  // Query the list of children
-  Todo.findAll({
-    orderByKey: []
-  }).then(function (todos) {
-
-    QUnit.start();
-
-    // Bind to query events
-    todos.bind('add', can.noop);
+      todos.unbind('remove');
+    });
 
     var secondTodoId = todos.attr('1.id');
-
-    // Remove the second child
     todosRef.child(secondTodoId).remove();
-
-    // Check that the model was removed from the list
-    QUnit.equal(todos.attr('length'), 2, 'An item was removed');
-    QUnit.equal(todos.attr('0.name'), 'Hop', 'The first item has the correct name');
-    QUnit.equal(todos.attr('1.name'), 'Jump', 'The second item has the correct name');
-    QUnit.ok(true, 'The correct item was removed');
   });
 });
 
@@ -561,59 +497,8 @@ QUnit.test('Removing a parent removes all models', function () {
 
     // Check that the all models are removed from the list
     QUnit.equal(todos.attr('length'), 0, 'All items were removed');
-  });
-});
-
-
-QUnit.test('Model list bind/unbind/bind empties and repopulates', function () {
-  // Get a reference to the `todos` child in the database
-  var todosRef = db.child('todos');
-
-  // Configure a Firebase backed Model to use the referenced
-  // `todos` child for storage
-  var Todo = canFirebase.Model.extend({
-    ref: todosRef
-  }, {});
-
-  // Create a list of children
-  todosRef.push({
-    name: 'Hop'
-  });
-  todosRef.push({
-    name: 'Skip'
-  });
-  todosRef.push({
-    name: 'Jump'
-  });
-
-  QUnit.stop();
-
-  // Query the list of children
-  Todo.findAll({
-    orderByKey: []
-  }).then(function (todos) {
-
-    QUnit.start();
 
     // Bind to query events
-    todos.bind('add', can.noop);
-
-    // Check that the all models are added to the list
-    QUnit.equal(todos.attr('length'), 3, 'All items were added');
-
-    // Unbind from query events
-    todos.unbind('add', can.noop);
-
-    // Check that the all models still present
-    QUnit.equal(todos.attr('length'), 3, 'Unbind did not remove items');
-
-    // Check that there are no query bindings
-    QUnit.equal(todos._queryBindings, undefined, 'Unbind removed query bindings');
-
-    // Rebind to query events
-    todos.bind('add', can.noop);
-
-    // Check that the all models are readded to the list
-    QUnit.equal(todos.attr('length'), 3, 'All items were readded');
+    todos.unbind('add');
   });
 });
