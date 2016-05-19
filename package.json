@@ -31,11 +31,11 @@
   "homepage": "https://github.com/akagomez/can-firebase#readme",
   "dependencies": {
     "can": "^2.3.23",
-    "firebase": "^2.4.2",
     "steal": "^0.16.2"
   },
   "devDependencies": {
     "eslint": "^2.8.0",
+    "firebase": "^3.0.1",
     "jquery": "^2.2.3",
     "serve": "^1.4.0",
     "steal-qunit": "^0.1.1",

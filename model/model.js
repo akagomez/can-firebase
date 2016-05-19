@@ -13,7 +13,7 @@ var FirebaseModel = Model.extend({
 
       // Add the `id` property to the data and resolve
       dfd.resolve(can.extend(snapshot.val(), {
-        id: child.key()
+        id: child.key
       }));
     });
 
@@ -34,7 +34,7 @@ var FirebaseModel = Model.extend({
     // Get the resulting data
     child.once('value', function (snapshot) {
       dfd.resolve(can.extend(snapshot.val(), {
-        id: child.key()
+        id: child.key
       }));
     });
 
@@ -85,7 +85,7 @@ var FirebaseModel = Model.extend({
       var list = new Constructor.List(query, orderType);
       snapshot.forEach(function (snapshot) {
         var model = can.extend({
-          id: snapshot.key()
+          id: snapshot.key
         }, snapshot.val());
         list.push(model);
       });
@@ -139,7 +139,7 @@ var FirebaseModel = Model.extend({
   _childValueChange: function (snapshot) {
     this.attr(can.extend({
       id: this.attr(this.constructor.id) // Set the id
-    }, snapshot.val()), true); // Replace others
+    }, snapshot.val()));
   }
 });
 
@@ -219,7 +219,7 @@ FirebaseModel.List = Model.List.extend({}, {
   },
   _childAdded: function (snapshot, prevChildKey) {
     var data = can.extend({
-      id: snapshot.key()
+      id: snapshot.key
     }, snapshot.val());
     var model = new this.constructor.Map(data);
     var childIndex = this._indexOfChildId(model.id);
@@ -243,7 +243,7 @@ FirebaseModel.List = Model.List.extend({}, {
     }
   },
   _childRemoved: function (snapshot) {
-    var childIndex = this._indexOfChildId(snapshot.key());
+    var childIndex = this._indexOfChildId(snapshot.key);
 
     if (childIndex > -1) {
       this.splice(childIndex, 1);
